@@ -1,0 +1,25 @@
+name: Deploy backend
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd /home/ubuntu/soinow_backend
+            git pull origin main
+            npm ci
+            npm run build
+            pm2 restart soinow-backend || pm2 start dist/server.js --name soinow-backend
+            pm2 save
