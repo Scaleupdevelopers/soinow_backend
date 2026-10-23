@@ -4,12 +4,11 @@ import express from "express";
 import helmet from "helmet";
 import mongoose from "mongoose";
 import authRoutes from "./routes/authRoutes";
-import { FRONTEND_URL } from "./config/environment";
 
 const app = express();
 
 app.use(helmet());
-app.use(cors({ origin: FRONTEND_URL }));
+app.use(cors({ origin: "https://dev.soiinow.com" }));
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 
