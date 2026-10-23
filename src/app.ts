@@ -1,22 +1,35 @@
 import "dotenv/config";
 import cors from "cors";
 import express from "express";
-import authRoutes from "./routes/auth.routes";
+import helmet from "helmet";
+import mongoose from "mongoose";
+import authRoutes from "./routes/authRoutes";
+import { FRONTEND_URL } from "./config/environment";
 
 const app = express();
 
-app.use(cors({ origin: process.env.FRONTEND_URL || false }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(helmet());
+app.use(cors({ origin: FRONTEND_URL }));
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 
 app.use("/api/v1/auth", authRoutes);
 
 app.get("/api/v1/health", (_req, res) => {
-  res.status(200).json({ status: "ok" });
+  const healthy = mongoose.connection.readyState === 1;
+  res.status(healthy ? 200 : 503).json({ status: healthy ? "ok" : "unavailable", database: healthy ? "connected" : "disconnected" });
 });
 
 app.use((_req, res) => {
   res.status(404).json({ message: "Route not found" });
+});
+
+app.use((error: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  if (error instanceof SyntaxError) {
+    return res.status(400).json({ success: false, message: "Invalid JSON body" });
+  }
+  console.error("Unhandled request error", error);
+  return res.status(500).json({ success: false, message: "Internal Server Error" });
 });
 
 export default app;

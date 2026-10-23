@@ -1,23 +1,47 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import mongoose, { Schema } from "mongoose";
 
-@Entity("users")
-export class User {
-  @PrimaryGeneratedColumn("uuid")
-  id!: string;
-
-  @Column({ type: "varchar", length: 100 })
-  name!: string;
-
-  @Column({ type: "varchar", length: 254, unique: true })
-  email!: string;
-
-  @Column({ type: "varchar", select: false })
-  passwordHash!: string;
-
-  @Column({ type: "boolean", default: false })
-  isLogout!: boolean;
-
-  // Incremented on logout so signing in again cannot revive old tokens.
-  @Column({ type: "integer", default: 0 })
-  tokenVersion!: number;
+interface UserDocument {
+  name: string;
+  email: string;
+  passwordHash: string;
+  isLogout: boolean;
+  tokenVersion: number;
 }
+
+const userSchema = new Schema<UserDocument>(
+  {
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 100,
+    },
+    email: {
+      type: String,
+      required: true,
+      trim: true,
+      lowercase: true,
+      maxlength: 254,
+      unique: true,
+    },
+    passwordHash: {
+      type: String,
+      required: true,
+      select: false,
+    },
+    isLogout: {
+      type: Boolean,
+      default: false,
+    },
+    tokenVersion: {
+      type: Number,
+      default: 0,
+    },
+  },
+  {
+    timestamps: true,
+    versionKey: false,
+  },
+);
+
+export const User = mongoose.model<UserDocument>("User", userSchema);
